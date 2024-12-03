@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+
+# 忽略编译的字节码文件
+*.pyc
+
+# 忽略 IDE 配置文件
+.vscode/
+.idea/
+
+# 忽略日志文件
+*.log
