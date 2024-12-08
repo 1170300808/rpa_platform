@@ -60,15 +60,25 @@ def copy_cell_styles(source_file, target_file, source_range, target_range):
     target_ws = target_wb.active
 
     # 获取源和目标区域的行列范围
-    source_cells = source_ws[source_range]
-    target_cells = target_ws[target_range]
+    if isinstance(source_range, tuple):
+        source_cells = list(source_ws.iter_rows(
+            min_row=source_range[0], max_row=source_range[1],
+            min_col=source_range[2], max_col=source_range[3]
+        ))
+        target_cells = list(target_ws.iter_rows(
+            min_row=target_range[0], max_row=target_range[1],
+            min_col=target_range[2], max_col=target_range[3]
+        ))
+    else:
+        source_cells = source_ws[source_range]
+        target_cells = target_ws[target_range]
+        if len(source_cells) != len(target_cells) or len(source_cells[0]) != len(target_cells[0]):
+            raise ValueError("源区域和目标区域的大小不匹配")
 
     for merged_range in source_ws.merged_cells.ranges:
         print(merged_range)
 
     # 确保源和目标区域的大小一致
-    if len(source_cells) != len(target_cells) or len(source_cells[0]) != len(target_cells[0]):
-        raise ValueError("源区域和目标区域的大小不匹配")
 
     copy_merged_cells(source_ws, target_ws, source_range, target_range)
 
@@ -101,8 +111,12 @@ def copy_cell_styles(source_file, target_file, source_range, target_range):
 
 def copy_merged_cells(source_sheet, target_sheet, source_range, target_range):
     # 获取源范围和目标范围的边界
-    min_col_s, min_row_s, max_col_s, max_row_s = range_boundaries(source_range)
-    min_col_t, min_row_t, max_col_t, max_row_t = range_boundaries(target_range)
+    if isinstance(source_range, str):
+        min_col_s, min_row_s, max_col_s, max_row_s = range_boundaries(source_range)
+        min_col_t, min_row_t, max_col_t, max_row_t = range_boundaries(target_range)
+    else:
+        min_row_s, max_row_s, min_col_s, max_col_s = source_range
+        min_row_t, max_row_t, min_col_t, max_col_t = target_range
 
     # 确保源范围和目标范围大小一致
     if (max_row_s - min_row_s) != (max_row_t - min_row_t) or (max_col_s - min_col_s) != (max_col_t - min_col_t):
@@ -124,7 +138,6 @@ def copy_merged_cells(source_sheet, target_sheet, source_range, target_range):
             # 合并目标单元格
             target_sheet.merge_cells(start_row=target_min_row, start_column=target_min_col,
                                      end_row=target_max_row, end_column=target_max_col)
-
 
 # 使用示例
 # copy_cell_styles('source.xlsx', 'target.xlsx', 'A1:B2', 'C3:D4')

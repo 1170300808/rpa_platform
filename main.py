@@ -13,7 +13,7 @@ def upload_files():
         filetypes=[("Excel 文件", "*.xlsx"), ("所有文件", "*.*")]
     )
     if files:
-        selected_files = list(files)
+        selected_files += list(files)
         # 在文件显示区域显示上传的文件
         file_list_text.delete(1.0, tk.END)
         file_list_text.insert(tk.END, "\n".join(selected_files))

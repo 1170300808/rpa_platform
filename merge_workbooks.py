@@ -1,5 +1,6 @@
 from openpyxl import load_workbook, Workbook
 from tkinter import simpledialog, filedialog, messagebox
+from copy_cell_styles import copy_cell_styles
 
 
 def run(file_list):
@@ -17,6 +18,7 @@ def run(file_list):
         common_header = []  # 用于存储第一个文件的前 n 行
         combined_data = []  # 用于存储从每个文件 n+1 行开始的数据
 
+        content_size = []
         # 3. 遍历所有已选择的文件
         for file in file_list:
             workbook = load_workbook(file)
@@ -35,8 +37,11 @@ def run(file_list):
                 return
 
             # (b) 读取从第 n+1 行开始的数据
+            size = 0
             for row in sheet.iter_rows(min_row=n + 1, values_only=True):
                 combined_data.append(row)
+                size += 1
+            content_size.append(size)
 
         # 4. 创建新工作簿并写入数据
         new_workbook = Workbook()
@@ -59,6 +64,20 @@ def run(file_list):
         if save_path:
             new_workbook.save(save_path)
             messagebox.showinfo("成功", "文件合并成功并已保存！")
+
+        # 先复制表头样式
+        min_row, max_row, min_col, max_col = 1, len(common_header), 1, len(common_header[0])
+        size = (min_row, max_row, min_col, max_col)
+        copy_cell_styles(file_list[0], save_path, size, size)
+
+        # 再复制内容样式
+        for idx, file in enumerate(file_list):
+            min_row = max_row + 1
+            max_row = min_row + content_size[idx] - 1
+            size = (min_row, max_row, min_col, max_col)
+            copy_cell_styles(file, save_path,
+                             (1 + len(common_header), len(common_header) + content_size[idx], min_col, max_col),
+                             size)
 
     except Exception as e:
         messagebox.showerror("错误", f"合并文件失败：{e}")
